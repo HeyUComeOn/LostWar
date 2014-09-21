@@ -1,102 +1,87 @@
 #include "AppDelegate.h"
-
-#include <vector>
-#include <string>
-
 #include "HelloWorldScene.h"
-#include "AppMacros.h"
 
 USING_NS_CC;
-using namespace std;
 
-AppDelegate::AppDelegate() {
+AppDelegate::AppDelegate() 
+{
 
 }
 
 AppDelegate::~AppDelegate() 
 {
+
 }
 
 bool AppDelegate::applicationDidFinishLaunching() {
-    // initialize director
-    auto director = Director::getInstance();
-    auto glview = director->getOpenGLView();
-    if(!glview) {
-        glview = GLView::create("Cpp Empty Test");
-        director->setOpenGLView(glview);
-    }
-
-    director->setOpenGLView(glview);
-
-    // Set the design resolution
-#if (CC_TARGET_PLATFORM == CC_PLATFORM_WP8)
-    // a bug in DirectX 11 level9-x on the device prevents ResolutionPolicy::NO_BORDER from working correctly
-    glview->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, ResolutionPolicy::SHOW_ALL);
-#else
-    glview->setDesignResolutionSize(designResolutionSize.width, designResolutionSize.height, ResolutionPolicy::NO_BORDER);
-#endif
-
-	Size frameSize = glview->getFrameSize();
-    
-    vector<string> searchPath;
-
-    // In this demo, we select resource according to the frame's height.
-    // If the resource size is different from design resolution size, you need to set contentScaleFactor.
-    // We use the ratio of resource's height to the height of design resolution,
-    // this can make sure that the resource's height could fit for the height of design resolution.
-
-    // if the frame's height is larger than the height of medium resource size, select large resource.
-	if (frameSize.height > mediumResource.size.height)
-	{
-        searchPath.push_back(largeResource.directory);
-
-        director->setContentScaleFactor(MIN(largeResource.size.height/designResolutionSize.height, largeResource.size.width/designResolutionSize.width));
+	// initialize director
+	auto director = Director::getInstance();
+	auto glview = director->getOpenGLView();
+	if(!glview) {
+		glview = GLView::create("My Game");
+		glview->setFrameSize(320, 480);
+		director->setOpenGLView(glview);
 	}
-    // if the frame's height is larger than the height of small resource size, select medium resource.
-    else if (frameSize.height > smallResource.size.height)
-    {
-        searchPath.push_back(mediumResource.directory);
-        
-        director->setContentScaleFactor(MIN(mediumResource.size.height/designResolutionSize.height, mediumResource.size.width/designResolutionSize.width));
-    }
-    // if the frame's height is smaller than the height of medium resource size, select small resource.
-	else
-    {
-        searchPath.push_back(smallResource.directory);
 
-        director->setContentScaleFactor(MIN(smallResource.size.height/designResolutionSize.height, smallResource.size.width/designResolutionSize.width));
-    }
+	// turn on display FPS
+	director->setDisplayStats(false);
+
+	// set FPS. the default value is 1.0/60 if you don't call this
+	director->setAnimationInterval(1.0 / 60);
+
+	//屏幕大小
+	auto screenSize = glview->getFrameSize();
+
     
-    // set searching path
-    FileUtils::getInstance()->setSearchPaths(searchPath);
-	
-    // turn on display FPS
-    director->setDisplayStats(true);
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_WP8) //WP8平台下width和height反了
+	if (screenSize.width > screenSize.height) {
+		glview->setFrameSize(screenSize.height, screenSize.width);
+		screenSize = glview->getFrameSize();
+	}
+#endif
+    
+	//设计分辨率大�?
+	auto designSize = Size(320, 480);
+	//资源大小
+	auto resourceSize = Size(640, 960);
 
-    // set FPS. the default value is 1.0/60 if you don't call this
-    director->setAnimationInterval(1.0 / 60);
+	std::vector<std::string> searchPaths;
 
-    // create a scene. it's an autorelease object
-    auto scene = HelloWorld::scene();
+	if (screenSize.height > 960) {	//640x1136
+		designSize = Size(320, 568);
+		searchPaths.push_back("hd");
+	} else {
+		searchPaths.push_back("hd");
+	}
 
-    // run
-    director->runWithScene(scene);
+	director->setContentScaleFactor(resourceSize.width/designSize.width); //默认�?.0f
 
-    return true;
+	FileUtils::getInstance()->setSearchPaths(searchPaths);
+
+	glview->setDesignResolutionSize(designSize.width, designSize.height, ResolutionPolicy::FIXED_WIDTH);
+
+	// create a scene. it's an autorelease object
+	auto scene = HelloWorld::createScene();
+
+	// run
+	director->runWithScene(scene);
+
+
+	return true;
 }
 
 // This function will be called when the app is inactive. When comes a phone call,it's be invoked too
 void AppDelegate::applicationDidEnterBackground() {
-    Director::getInstance()->stopAnimation();
+	Director::getInstance()->stopAnimation();
 
-    // if you use SimpleAudioEngine, it must be pause
-    // SimpleAudioEngine::sharedEngine()->pauseBackgroundMusic();
+	// if you use SimpleAudioEngine, it must be pause
+	SimpleAudioEngine::getInstance()->pauseBackgroundMusic();
 }
 
 // this function will be called when the app is active again
 void AppDelegate::applicationWillEnterForeground() {
-    Director::getInstance()->startAnimation();
+	Director::getInstance()->startAnimation();
 
-    // if you use SimpleAudioEngine, it must resume here
-    // SimpleAudioEngine::sharedEngine()->resumeBackgroundMusic();
+	// if you use SimpleAudioEngine, it must resume here
+	SimpleAudioEngine::getInstance()->resumeBackgroundMusic();
 }
